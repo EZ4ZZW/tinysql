@@ -72,6 +72,18 @@ func EncodeRowKeyWithHandle(tableID int64, handle int64) kv.Key {
 // DecodeRecordKey decodes the key and gets the tableID, handle.
 func DecodeRecordKey(key kv.Key) (tableID int64, handle int64, err error) {
 	/* Your code here */
+	if !key.HasPrefix(tablePrefix) {
+		return -1, -1, errors.New("no prefix")
+	}
+	var bytesStream []byte
+	bytesStream, tableID, err = codec.DecodeInt(key[tablePrefixLength:])
+	if err != nil {
+		return -1, -1, err
+	}
+	_, handle, err = codec.DecodeInt(bytesStream[len(recordPrefixSep):])
+	if err != nil {
+		return -1, -1, err
+	}
 	return
 }
 
@@ -95,6 +107,20 @@ func EncodeIndexSeekKey(tableID int64, idxID int64, encodedValue []byte) kv.Key 
 // DecodeIndexKeyPrefix decodes the key and gets the tableID, indexID, indexValues.
 func DecodeIndexKeyPrefix(key kv.Key) (tableID int64, indexID int64, indexValues []byte, err error) {
 	/* Your code here */
+	// prefix + id + encodedValue
+	if !key.HasPrefix(tablePrefix) {
+		return -1, -1, nil, errors.New("no prefix")
+	}
+
+	var bytesStream []byte
+	bytesStream, tableID, err = codec.DecodeInt(key[tablePrefixLength:])
+	if err != nil {
+		return -1, -1, nil, err
+	}
+	indexValues, indexID, err = codec.DecodeInt(bytesStream[len(indexPrefixSep):])
+	if err != nil {
+		return -1, -1, nil, err
+	}
 	return tableID, indexID, indexValues, nil
 }
 
